@@ -6,8 +6,10 @@ import os
 from PIL import Image, UnidentifiedImageError
 import numpy as np
 from io import BytesIO
+import cv2
 
 from ml_model.ocr import detect_plate_number
+from ml_model.object_detect import detect_yolo_objects
 
 
 
@@ -19,6 +21,38 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 @app.get("/")
 async def root():
     return HTMLResponse(content=open("static/index.html", encoding="utf-8").read())
+
+
+@app.post("/video")
+async def upload_video(file: UploadFile = File(...)):
+    # save file
+    os.makedirs("media", exist_ok = True)
+    video_path = f"media/{file.filename}"
+    with open(video_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # get frame
+    cap = cv2.VideoCapture(video_path)
+    results = []
+
+    frame_idx = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret or frame_idx > 30:   # test로 30 frame만
+            break
+
+        detected = detect_yolo_objects(frame)   # module 만들어서 연결하기기
+        results.append({
+            "frame": frame_idx,
+            "objects": detected
+        })
+        frame_idx += 1
+    
+    cap.release()
+    return JSONResponse({"result": "success", "frames_analyzed": frame_idx, "detections": results})
+
+
+
 
 
 @app.post("/upload")
