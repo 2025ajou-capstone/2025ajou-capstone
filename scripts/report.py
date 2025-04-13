@@ -5,6 +5,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import os
 
@@ -13,7 +15,7 @@ traffic_report_url = "https://www.safetyreport.go.kr/#safereport/safereport3"
 
 
 violation_type = "Test type"
-location = "Some location"
+location = "판교역로 2"
 plate_number = "123가5678"
 violation_date = "1999.06.03"
 violation_hour = "5"
@@ -90,11 +92,28 @@ def report_traffic(violation_type, location, plate_number, violation_date, viola
         select_min = Select(driver.find_element(By.ID, "DEVEL_TIME_MM"))
         select_min.select_by_value(violation_minute.zfill(2))  # 예: "5" → "05"
 
+        # 도로명 주소 입력
+        main_window = driver.current_window_handle
+        driver.find_element(By.ID, "btnFindLoc").click()
+       
+        WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1) # 새 창이 열릴 때까지 대기
+
+        for handle in driver.window_handles:     # 새 창으로 포커스 전환
+            if handle != main_window:
+                driver.switch_to.window(handle)
+                break
+    
+        iframe = driver.find_element(By.XPATH, '//iframe[@title="우편번호 검색 프레임"]') #iframe 이동
+        driver.switch_to.frame(iframe)
+        driver.find_element(By.ID, "region_name").send_keys(location)
+        driver.find_element(By.XPATH, '//*[@id="searchForm"]/fieldset/div/button[2]').click()
+        driver.find_element(By.XPATH, '//*[@id="focusContent"]/ul/li[1]/dl/dd[1]/span/button').click()
+        driver.switch_to.window(main_window)
 
         time.sleep(1000)  
 
 
-
+#//*[@id="searchForm"]/fieldset/div/button[2]
     except Exception as e:
         print(f"🚨 Error {e}")
 
