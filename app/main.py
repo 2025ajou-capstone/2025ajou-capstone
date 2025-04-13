@@ -7,21 +7,33 @@ from PIL import Image, UnidentifiedImageError
 import numpy as np
 from io import BytesIO
 import cv2
+import sys
 
-from ml_model.ocr import detect_plate_number
-from ml_model.object_detect import detect_yolo_objects
+# root 디렉토리 경로
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
+sys.path.append(BASE_DIR)
+
+
+from vision.ocr import detect_plate_number
+from vision.object_detect import detect_yolo_objects
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory = "static"), name="static")
-app.mount("/media", StaticFiles(directory="media"), name="media")
+static_dir = os.path.join(BASE_DIR, "static")
+media_dir = os.path.join(BASE_DIR, "media")
+
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+if os.path.exists(media_dir):
+    app.mount("/media", StaticFiles(directory=media_dir), name="media")
 
 @app.get("/")
 async def root():
-    return HTMLResponse(content=open("static/index.html", encoding="utf-8").read())
-
+    index_path = os.path.join(BASE_DIR, "static", "index.html")
+    with open(index_path, encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
 
 @app.post("/video")
 async def upload_video(file: UploadFile = File(...)):
