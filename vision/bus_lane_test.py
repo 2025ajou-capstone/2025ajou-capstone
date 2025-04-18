@@ -33,6 +33,8 @@ for i in range(1, num_labels):
     if stats[i, cv2.CC_STAT_AREA] >= min_area:
         filtered_mask[labels == i] = 255
 
+
+
 # 노란색 오버레이 생성
 overlay = np.zeros_like(roi)
 overlay[filtered_mask > 0] = (0, 255, 255)
