@@ -12,7 +12,7 @@ import os
 
 login_url = "https://www.safetyreport.go.kr/#/main/login/login"
 traffic_report_url = "https://www.safetyreport.go.kr/#safereport/safereport3"
-
+upload_file_path = "C:\\blackbox_file\\250418.jpg"
 
 violation_type = "Test type"
 location = "판교역로 2"
@@ -25,7 +25,7 @@ phone_number = "Test mobile"
 user_id = "kakaokokoa"
 user_pw = "wotjr7134!"
 
-
+# 텍스트형 먼저 입력 -> 위치 등록 -> 파일 입력 -> 신고 OR 임시저장 FLOW
 def report_traffic(violation_type, location, plate_number, violation_date, violation_hour,violation_minute, phone_number):
     chrome_options = Options()
     chrome_options.add_argument("--start-maximized")
@@ -105,11 +105,26 @@ def report_traffic(violation_type, location, plate_number, violation_date, viola
     
         iframe = driver.find_element(By.XPATH, '//iframe[@title="우편번호 검색 프레임"]') #iframe 이동
         driver.switch_to.frame(iframe)
+        #print("현재 창 제목:", driver.title)
         driver.find_element(By.ID, "region_name").send_keys(location)
         driver.find_element(By.XPATH, '//*[@id="searchForm"]/fieldset/div/button[2]').click()
         driver.find_element(By.XPATH, '//*[@id="focusContent"]/ul/li[1]/dl/dd[1]/span/button').click()
         driver.switch_to.window(main_window)
+        #print("현재 창 제목:", driver.title)
 
+        # 파일 등록 기능능
+        iframe = driver.find_element(By.XPATH, '//*[@id="raonkuploader_frame_kupload1"]') #iframe 이동
+        driver.switch_to.frame(iframe)
+        # driver.find_element(By.ID,"button_add").click() -> 업로드 파일 버튼
+
+        container = driver.find_element(By.ID, "RAON_K_UP_wrapper") # 파일 업로드 input 요소 찾기
+        file_input = container.find_element(By.CSS_SELECTOR, 'input[type="file"]')
+        file_input.send_keys(upload_file_path)
+        driver.switch_to.window(main_window)
+        
+        # 임시 저장 XPATH
+        driver.find_element(By.XPATH, '//*[@id="frmSafeReport"]/div[2]/article/div/div[6]/a[2]').click()
+        # 신고 XPATH: //*[@id="frmSafeReport"]/div[2]/article/div/div[6]/a[3]
         time.sleep(1000)  
 
 
